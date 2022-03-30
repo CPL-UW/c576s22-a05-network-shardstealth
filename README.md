@@ -6,3 +6,7 @@
 4. Hit run?
 
 Apologies for the mess. YMMV.
+
+For testing, run both build1 and build2. In one screen hit host then drop a piece. In the other screen then hit client.
+
+There is now a counter at the top that counts how many pieces the opponent has dropped.
