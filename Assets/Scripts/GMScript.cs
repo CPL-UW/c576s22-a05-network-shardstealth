@@ -20,8 +20,10 @@ public class GMScript : NetworkBehaviour
     public Tilemap enemyMap;
     public TMP_Text infoText;
     public TMP_Text dashText;
+    public TMP_Text EnemyDropCount;
     public bool DEBUG_MODE;
-    
+
+    private int _enemyDropCount;
     private int _difficulty;
     private int _fixedUpdateCount;
     private int _fixedUpdateFramesToWait = 10;
@@ -89,6 +91,7 @@ public class GMScript : NetworkBehaviour
 
     private const string MSG_TYPE_CHUNK = "CHUNK";
     private const string MSG_TYPE_PIECE = "PIECE";
+    private const string MSG_TYPE_PIECE_DROP = "PIECEDROP";
 
     private void SendChunkMessage()
     {
@@ -100,6 +103,11 @@ public class GMScript : NetworkBehaviour
         SendMessageToAll(MSG_TYPE_PIECE,v2s(_myPiece));
     }
 
+    private void SendDropPieceMessage()
+    {
+        SendMessageToAll(MSG_TYPE_PIECE_DROP, "piecedropped");
+    }
+
     void DoNetworkUpdate()
     {
         if (!_networkStarted) return;
@@ -107,6 +115,7 @@ public class GMScript : NetworkBehaviour
         {
             NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(MSG_TYPE_CHUNK, ReceiveChunkMessage);
             NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(MSG_TYPE_PIECE, ReceivePieceMessage);
+            NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(MSG_TYPE_PIECE_DROP, ReceivePieceDropMessage);
             _networkRegistered = true;
             return;
         }
@@ -127,9 +136,15 @@ public class GMScript : NetworkBehaviour
         reader.ReadValueSafe(out var message);
         _enemyChunk = SwitchBounds(s2v(message),_hBounds,_eBounds);
     }
-    
-    
-    
+
+    private void ReceivePieceDropMessage(ulong senderID, FastBufferReader reader)
+    {
+        _enemyDropCount++;
+        EnemyDropCount.text = "Enemy Dropped: " + _enemyDropCount.ToString();
+    }
+
+
+
     private void Update()
     {
         if (null == Camera.main) return;
@@ -248,6 +263,7 @@ public class GMScript : NetworkBehaviour
     {
         Dirty = true;
         (_myPiece, _myChunk) = DropPiece(_hBounds,_myPiece,_myChunk);
+        SendDropPieceMessage();
     }
 
     private void PlayerMove(int dx,int dy)
